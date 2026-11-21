@@ -1,136 +1,143 @@
-# Field Sync: Offline-First Data Collector
 
-## What you are building
-An Android app that lets a field worker create and edit records with no network,
-store them locally, and sync them to a server later. The server is provided
-(`server/`). You build the app's sync logic and the parts marked TODO.
+# Vanish Class Network
 
-## Folder layout
-```
-field-sync/
+A Flutter-based class messaging application where messages automatically disappear 30 seconds after delivery.
+
+## Project Overview
+
+Vanish Class Network allows students to communicate through a shared class relay. Messages are distributed to joined devices and automatically expire after 30 seconds.
+
+The application is built with Flutter and uses WebSocket communication, SQLite storage and local message expiry management.
+
+## Main Features
+
+- Shared class messaging through a WebSocket relay.
+- Automatic 30-second message expiry.
+- Server timestamp synchronization for accurate countdowns.
+- Offline message queue with a local 30-second deadline.
+- Duplicate message detection using unique message IDs.
+- Automatic reconnection after connection loss.
+- Local SQLite message storage and expiry cleanup.
+- Multiple application themes.
+
+## Technology Stack
+
+- Flutter and Dart
+- WebSocket communication
+- JSON protocol
+- SQLite using sqflite
+- SharedPreferences
+- UUID for unique message identifiers
+
+## Repository Structure
+
+```text
+Vanish-Class-Network/
+│
 ├── README.md
-├── .gitignore
-├── server/                 # provided Python server (run this first)
-│   ├── main.py
-│   ├── test_server.py
-│   └── requirements.txt
-└── app/                    # Android Studio project (Kotlin + Jetpack Compose)
-    ├── settings.gradle.kts
-    ├── build.gradle.kts
-    ├── gradle.properties
-    └── app/
-        ├── build.gradle.kts
-        └── src/main/
-            ├── AndroidManifest.xml
-            └── java/com/example/fieldsync/
-                ├── MainActivity.kt
-                └── data/
-                    ├── AppDatabase.kt
-                    ├── RecordDao.kt
-                    ├── RecordEntity.kt
-                    ├── SyncApi.kt
-                    └── SyncRepository.kt
+├── PROTOCOL.md
+├── API_SPEC_VANISH_PROPOSAL.md
+├── PREMIUM_UI_NOTES.md
+│
+└── vanish_flutter/
+    ├── android/
+    ├── lib/
+    ├── test/
+    ├── pubspec.yaml
+    ├── pubspec.lock
+    └── README.md
 ```
 
-## Setup
+## Class Relay
 
-### 1. Run the server
-Open a terminal in the `server/` folder. The database file `server.db` is created in
-the folder you run the command from, so always start the server from `server/`.
+The Flutter application uses the class-approved Protocol v1 relay:
 
-macOS / Linux:
+`wss://vanish-relay-sawaira.bonto.page/ws`
+
+All participating devices must use the same relay address and compatible protocol.
+
+## Getting Started
+
+### Requirements
+
+- Flutter SDK
+- Android Studio or another Flutter-compatible IDE
+- Android device or emulator
+- Internet connection
+
+### Installation
+
+Clone the repository:
+
 ```bash
-cd server
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
+git clone https://github.com/thehassamali-commits/Vanish-Class-Network.git
 ```
 
-Windows (PowerShell):
-```powershell
-cd server
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+Open the Flutter project:
 
-In a second terminal (same folder, venv active):
 ```bash
-python test_server.py http://localhost:8000
+cd Vanish-Class-Network/vanish_flutter
 ```
-You must see `ALL PASSED`. If not, fix the server before touching the app.
-To reset all data, stop the server and delete `server/server.db`.
 
-### 2. Open the app
-1. Open the `app/` folder in Android Studio (Ladybug 2024.2.1 or newer).
-2. Let Gradle sync. Android Studio will create the Gradle wrapper automatically.
-3. If it asks to upgrade the Android Gradle Plugin or Kotlin, decline the upgrade
-   and ask your instructor. The versions in this project are pinned on purpose.
+Install dependencies:
 
-### 3. Point the app at the server
-- **Android emulator:** `BASE_URL` is already `http://10.0.2.2:8000/`. This address
-  reaches your laptop's `localhost`.
-- **Physical phone:** put the laptop and phone on the same Wi-Fi. Find the laptop's
-  LAN IP (`ipconfig` on Windows, `ifconfig` or `ip a` on Linux/macOS, usually
-  `192.168.x.x`). Change `BASE_URL` in `data/SyncApi.kt` to `http://<laptop-ip>:8000/`
-  (keep the trailing slash). Your firewall must allow inbound port 8000.
+```bash
+flutter pub get
+```
 
-### 4. Run the app
-Press Run. The app shows two fields, Title and Note, a **Save locally** button, and a
-**Sync** button. Records you save appear in the list marked "(unsynced)" until a sync
-succeeds.
+Check connected devices:
 
-## What is provided (working)
-- Local records: create and edit, stored in Room (SQLite).
-- Push: sends records marked dirty to `/sync/push`. Accepted records are marked clean.
-- Pull: fetches changes from `/sync/pull` using a stored cursor, page by page.
-- Sync button that runs push, then pull.
+```bash
+flutter devices
+```
 
-## What you must build (TODO comments in the code)
-Each item is graded. Do the design work (item 1) before writing code.
+Run the application:
 
-1. **Design document (before coding), 1-2 pages.** Answer in writing:
-   - How does the server know a write is stale? (Read `server/main.py`.)
-   - Your conflict policy: what happens when `base_version` does not match, and why.
-     Options include last-write-wins by timestamp, field-level merge, keeping both
-     copies, or asking the user. You must justify the choice.
-   - How your app avoids losing a local edit that is made while a push is in flight.
-2. **Conflict handling.** Implement your policy in `SyncRepository.push()` where the
-   `conflicts` list is handled. Also change `pull()` so it never overwrites a dirty
-   local record.
-3. **Idempotent retries.** A phone may resend a push after a timeout. Send a unique
-   `push_id` from the app for each push, and make the server in `main.py` ignore a
-   push_id it has already processed (no duplicate writes, no double version bumps).
-4. **Deletes.** Implement delete with a tombstone (a `deleted` flag that syncs like
-   any other change), so deletions reach other devices.
-5. **Known gap.** `SyncRepository.push()` marks accepted records clean. If the user
-   edits a record while the push is in flight, that edit can be marked clean and lost.
-   Fix it and explain the fix.
-6. **Test plan, at least five scenarios.** Include: airplane mode mid-sync, two
-   devices editing the same record offline, a duplicate push, the server being down,
-   and the app being killed during a sync. Record expected and actual results.
+```bash
+flutter run
+```
 
-## Deliverables
-- Design document (1-2 pages), including your conflict policy and reasons.
-- Working app and server, with a two-device demo. The instructor will inject a failure.
-- Test log with at least five scenarios.
-- Individual viva (10 minutes): you explain your code and one trade-off.
-- A short note listing which parts were generated by AI and which you wrote or changed.
+### Build APK
 
-## Rules
-- AI tools are allowed. Disclose their use in the note above.
-- You must be able to explain every line you submit. Expect questions on your code,
-  not on the starter code.
+```bash
+flutter build apk --release
+```
 
-## Troubleshooting
-| Symptom | Likely cause and fix |
-|---|---|
-| `test_server.py` fails to connect | Server not running, or not started from `server/`. |
-| Sync failed: `Failed to connect` on a phone | Wrong `BASE_URL`, phone not on the same Wi-Fi, or firewall blocks port 8000. |
-| Sync failed on the emulator | Server not running on the laptop. `10.0.2.2` is the host machine. |
-| Gradle errors about AndroidX | Check that `gradle.properties` contains `android.useAndroidX=true`. |
-| Cleartext HTTP blocked | Check that `AndroidManifest.xml` has `android:usesCleartextTraffic="true"`. Development only. |
-| Records vanish after reinstall | Expected: local data is deleted with the app. |
-| Server returns 422 | The request body does not match the server's model. Compare with `SyncApi.kt`. |
+The generated APK is located at:
+
+`build/app/outputs/flutter-apk/app-release.apk`
+
+## Protocol
+
+The application uses Protocol v1 with JSON messages transmitted through WebSocket connections.
+
+The protocol defines joining, messaging, delivery notifications, expiry, heartbeat, reconnection, duplicate handling, clock synchronization, offline queue behaviour and the documented presence extension.
+
+See [PROTOCOL.md](PROTOCOL.md) for the message formats and details.
+
+## Testing
+
+The project has been tested for two-device messaging, message countdown and expiry, and offline message delivery.
+
+Further lifecycle and interoperability testing should be performed where applicable.
+
+## Limitations
+
+- Screenshots and external photography cannot be completely prevented.
+- The relay may temporarily process message content.
+- The relay is not password protected.
+- The application does not provide end-to-end encryption.
+- Offline devices cannot receive messages that expire before they reconnect.
+- The hosted relay depends on its hosting provider's availability.
+
+## AI Assistance
+
+AI tools were used to assist with selected parts of development, debugging and documentation. The project should be understood and explained by its developer.
+
+## Author
+
+Hassam Ali
+
+## Repository
+
+https://github.com/thehassamali-commits/Vanish-Class-Network

@@ -95,6 +95,23 @@ Codes: `bad_json`, `bad_protocol`, `bad_name`, `not_joined`, `bad_message`, `unk
 
 The relay keeps messages in memory only and deletes them at `expires_at`. The app may queue an outgoing message locally while disconnected, but drops it if its local 30-second queue deadline passes before it can be sent. The relay does not know about the offline queue. After reconnect, the app sends only unexpired queued messages. The relay does not replay earlier messages.
 
+
+## 12. Presence (relay -> all joined apps)
+
+The relay broadcasts a presence update whenever a user joins or leaves.
+
+Example:
+
+```json
+{"type":"presence","count":3,"members":["Sawaira","Ali","Sara"]}
+```
+
+- `count` represents the current number of joined apps.
+- `members` contains the display names of joined users in join order.
+- The relay sends this update to all currently joined apps.
+- Apps that do not recognize this message type can safely ignore it.
+
+
 ## Notes
 
 - `device_id` is sent by apps but the relay does not use it yet.

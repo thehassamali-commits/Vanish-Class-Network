@@ -1,17 +1,65 @@
-# vanish_class_network
 
-A new Flutter project.
+# Vanish Class Network - Flutter Client
 
-## Getting Started
+This directory contains the Flutter Android application for Vanish Class Network.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- Join the shared class relay using a display name.
+- Send and receive class messages.
+- Automatically remove messages after 30 seconds.
+- Synchronize countdown timing with the relay.
+- Queue outgoing messages temporarily when offline.
+- Discard queued messages after their local expiry deadline.
+- Prevent duplicate messages using unique IDs.
+- Reconnect automatically after disconnection.
+- Store messages locally using SQLite.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter SDK
+- Android Studio
+- Android device or emulator
+- Internet connection
+
+## Setup
+
+Install dependencies:
+
+```bash
+flutter pub get
+```
+
+Check connected devices:
+
+```bash
+flutter devices
+```
+
+Run:
+
+```bash
+flutter run
+```
+
+Build a release APK:
+
+```bash
+flutter build apk --release
+```
+
+## Relay Configuration
+
+The default relay address is configured in `lib/main.dart`.
+
+The application uses:
+
+`wss://vanish-relay-sawaira.bonto.page/ws`
+
+## Protocol
+
+See the repository's root `PROTOCOL.md` file for the communication protocol.
+
+## Author
+
+Hassam Ali
